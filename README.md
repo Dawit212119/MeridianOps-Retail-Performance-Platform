@@ -54,14 +54,6 @@ Frontend only:
 docker compose -f docker-compose.yml --profile test run --rm frontend-tests
 ```
 
-## Full Production Validation Flow
-
-```bash
-docker compose -f docker-compose.yml up --build -d
-docker compose -f docker-compose.yml --profile test run --rm backend-tests && docker compose -f docker-compose.yml --profile test run --rm frontend-tests
-docker compose -f docker-compose.yml down
-```
-
 ## Stop Everything
 
 ```bash
