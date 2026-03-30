@@ -49,7 +49,7 @@ def _store_from_order_reference(reference: str | None) -> int:
 
 def _read_conversion_and_aov(db: Session, business_date: date, store_id: int) -> tuple[int, int, Decimal]:
     rows = db.execute(
-        select(CouponRedemptionEvent).where(func.date(CouponRedemptionEvent.created_at) == str(business_date))
+        select(CouponRedemptionEvent).where(func.date(CouponRedemptionEvent.created_at) == business_date)
     ).scalars()
 
     successful_orders = 0
@@ -73,7 +73,7 @@ def _read_conversion_and_aov(db: Session, business_date: date, store_id: int) ->
 
 def _read_inventory_turnover(db: Session, business_date: date, store_id: int) -> tuple[Decimal, Decimal, Decimal]:
     rows = db.execute(
-        select(InventoryLedger).where(func.date(InventoryLedger.created_at) == str(business_date))
+        select(InventoryLedger).where(func.date(InventoryLedger.created_at) == business_date)
     ).scalars()
 
     inbound_qty = Decimal("0.000")

@@ -221,7 +221,7 @@ def _count_redemptions_today(db: Session, campaign_id: int, store_id: int | None
     stmt = select(func.count(CouponRedemptionEvent.id)).where(
         CouponRedemptionEvent.campaign_id == campaign_id,
         CouponRedemptionEvent.status == RedemptionStatus.SUCCESS.value,
-        func.date(CouponRedemptionEvent.created_at) == str(today),
+        func.date(CouponRedemptionEvent.created_at) == today,
     )
     if store_id is not None:
         stmt = stmt.where(CouponRedemptionEvent.store_id == store_id)
@@ -239,7 +239,7 @@ def _count_member_redemptions_today(
         CouponRedemptionEvent.campaign_id == campaign_id,
         CouponRedemptionEvent.member_id == member_id,
         CouponRedemptionEvent.status == RedemptionStatus.SUCCESS.value,
-        func.date(CouponRedemptionEvent.created_at) == str(today),
+        func.date(CouponRedemptionEvent.created_at) == today,
     )
     if store_id is not None:
         stmt = stmt.where(CouponRedemptionEvent.store_id == store_id)

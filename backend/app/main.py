@@ -44,6 +44,7 @@ def _build_error_payload(
 ) -> dict:
     payload = {
         "detail": detail,
+        "error": {"message": detail},
         "error_code": _http_error_code(status_code),
         "status_code": status_code,
         "path": request.url.path,

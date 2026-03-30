@@ -40,7 +40,7 @@ services:
       retries: 12
       start_period: 15s
     ports:
-      - "8000:8000"
+      - "1000:8000"
 
   frontend:
     build:

@@ -11,6 +11,7 @@ from app.db.models import (
     InventoryLedger,
     InventoryLocation,
     InventoryReservation,
+    User,
 )
 from app.schemas.auth import AuthUser
 from app.schemas.inventory import (
@@ -353,6 +354,7 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
     item = _get_item_by_sku(db, payload.sku)
     location = _get_location_by_code(db, payload.location_code, store_id=current_user.store_id)
     qty = quantize_qty(payload.quantity)
+    actor_user_id = db.execute(select(User.id).where(User.id == current_user.id)).scalar_one_or_none()
 
     # Lock open reservations for this position before evaluating availability.
     db.execute(
@@ -361,6 +363,16 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
             InventoryReservation.item_id == item.id,
             InventoryReservation.location_id == location.id,
             InventoryReservation.status.in_(["open", "partial"]),
+        )
+        .with_for_update()
+    ).all()
+
+    # Lock position ledger rows so concurrent reservations on the same item/location serialize.
+    db.execute(
+        select(InventoryLedger.id)
+        .where(
+            InventoryLedger.item_id == item.id,
+            InventoryLedger.location_id == location.id,
         )
         .with_for_update()
     ).all()
@@ -377,7 +389,7 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
         reserved_qty=qty,
         released_qty=Decimal("0"),
         status="open",
-        created_by_user_id=current_user.id,
+        created_by_user_id=actor_user_id,
     )
     db.add(reservation)
     db.flush()
@@ -400,7 +412,7 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
         action="inventory.reservation.created",
         resource_type="inventory_reservation",
         resource_id=str(reservation.id),
-        actor_user_id=current_user.id,
+        actor_user_id=actor_user_id,
         detail={"order_reference": reservation.order_reference, "sku": item.sku, "qty": str(qty)},
     )
 
@@ -413,7 +425,7 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
                 "sku": item.sku,
                 "location_code": location.code,
                 "reserved_qty": str(qty),
-                "operator_user_id": current_user.id,
+                "operator_user_id": actor_user_id,
             },
             _SENSITIVE_LOG_KEYS,
         ),
