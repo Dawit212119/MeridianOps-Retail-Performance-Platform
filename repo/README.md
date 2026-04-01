@@ -6,6 +6,14 @@
 docker compose -f docker-compose.yml up --build -d
 ```
 
+Or use the helper script:
+
+```bash
+./run_app.sh
+```
+
+This starts the application in detached mode and exits the terminal command while containers keep running.
+
 Services:
 
 - Backend API: http://localhost:8000/api/v1/health
@@ -17,8 +25,10 @@ Services:
 Run this after the app stack is up:
 
 ```bash
-docker compose -f docker-compose.yml --profile test run --rm backend-tests && docker compose -f docker-compose.yml --profile test run --rm frontend-tests
+./run_tests.sh
 ```
+
+The test runner exits when done. If app services were already running before tests, they stay running.
 
 Important: do not use `up --abort-on-container-exit` for sequential tests. That mode can stop the second test container early (exit code 137) when the first test container exits.
 
