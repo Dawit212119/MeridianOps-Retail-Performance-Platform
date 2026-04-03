@@ -22,24 +22,15 @@ def _pg_url() -> str | None:
     return os.getenv("POSTGRES_TEST_DATABASE_URL")
 
 
-def _is_truthy_env(name: str) -> bool:
-    value = os.getenv(name, "").strip().lower()
-    return value in {"1", "true", "yes", "on"}
-
-
-def _require_postgres_locking_tests() -> bool:
-    return _is_truthy_env("REQUIRE_POSTGRES_LOCKING_TESTS") or _is_truthy_env("CI")
-
-
 @pytest.fixture(scope="module")
 def pg_engine():
     url = _pg_url()
     if not url:
-        if _require_postgres_locking_tests():
-            pytest.fail(
-                "POSTGRES_TEST_DATABASE_URL is required when CI or REQUIRE_POSTGRES_LOCKING_TESTS=1"
-            )
-        pytest.skip("POSTGRES_TEST_DATABASE_URL is not set; skipping PostgreSQL locking tests")
+        pytest.fail(
+            "POSTGRES_TEST_DATABASE_URL is required. "
+            "PostgreSQL locking tests are mandatory and must never be skipped. "
+            "Set POSTGRES_TEST_DATABASE_URL to a valid PostgreSQL connection string."
+        )
 
     engine = create_engine(url, future=True)
     Base.metadata.create_all(bind=engine)
@@ -183,7 +174,11 @@ def test_postgres_inventory_reservation_prevents_double_spend(pg_session_factory
     assert any("Insufficient available stock" in item for item in outcomes if item != "open")
 
     with pg_session_factory() as db:
-        reservations = db.execute(select(InventoryReservation)).scalars().all()
+        reservations = db.execute(
+            select(InventoryReservation).where(
+                InventoryReservation.order_reference.in_(["ORDER-PG-1", "ORDER-PG-2"])
+            )
+        ).scalars().all()
         assert len(reservations) == 1
         assert reservations[0].reserved_qty == Decimal("4.000")
 

@@ -47,8 +47,8 @@ Do not run backend or frontend directly on the host machine for acceptance/runti
 
 Notes:
 
-- Backend PostgreSQL locking tests fail (instead of skip) when `REQUIRE_POSTGRES_LOCKING_TESTS=1` or `CI=true` and `POSTGRES_TEST_DATABASE_URL` is missing.
-- `run_tests.sh` sets `REQUIRE_POSTGRES_LOCKING_TESTS=1` for `backend-tests`, enforcing the locking suite in CI and local Docker runs.
+- Backend PostgreSQL locking tests are mandatory and always fail (never skip) when `POSTGRES_TEST_DATABASE_URL` is missing.
+- The Docker test container sets `POSTGRES_TEST_DATABASE_URL` automatically, ensuring locking tests always execute in Docker and CI.
 
 ## Run Individual Test Suites In Docker
 

@@ -42,7 +42,7 @@ detect_running_app_stack
 "${COMPOSE_CMD[@]}" rm -f -s backend-tests frontend-tests >/dev/null 2>&1 || true
 
 echo "Running backend suite (SQLite fast path + mandatory PostgreSQL locking)..."
-"${COMPOSE_CMD[@]}" run --build --rm -e REQUIRE_POSTGRES_LOCKING_TESTS=1 backend-tests
+"${COMPOSE_CMD[@]}" run --build --rm backend-tests
 
 echo "Running frontend suite..."
 "${COMPOSE_CMD[@]}" run --build --rm frontend-tests

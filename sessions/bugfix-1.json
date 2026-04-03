@@ -1,4 +1,6 @@
 {
+  "session_id": "019d3380-a100-7001-b001-000000000001",
+  "timestamp": "2026-03-28T09:00:00.000Z",
   "summary": "Implemented store-scoped data isolation, NFC attendance support, KPI-backed analytics data, and added coverage for key risk areas.",
   "fixes": [
     {

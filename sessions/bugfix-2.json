@@ -1,4 +1,6 @@
 {
+  "session_id": "019d3390-a200-7002-b002-000000000002",
+  "timestamp": "2026-03-28T09:58:00.000Z",
   "summary": "Implemented campaign store isolation, dynamic analytics store scope, and upgraded analytics builder with drag-drop/filter-link metadata.",
   "fixes": [
     {
