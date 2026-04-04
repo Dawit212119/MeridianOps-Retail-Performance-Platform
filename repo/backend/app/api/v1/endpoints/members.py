@@ -198,14 +198,15 @@ def member_wallet_ledger(
         member = get_member_by_code_or_raise(db, member_code, store_id=current_user.store_id)
     except MemberNotFoundError as exc:
         raise not_found(str(exc))
+    from app.services.member_view_service import _decrypt_stored_amount
     entries = get_wallet_ledger(db, member.id)
     return [
         WalletLedgerEntry(
             id=entry.id,
             member_id=entry.member_id,
             entry_type=entry.entry_type,
-            amount=Decimal(entry.amount),
-            balance_after=Decimal(entry.balance_after),
+            amount=_decrypt_stored_amount(entry.amount),
+            balance_after=_decrypt_stored_amount(entry.balance_after),
             reason=entry.reason,
         )
         for entry in entries

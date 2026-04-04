@@ -9,6 +9,23 @@ from app.schemas.loyalty import MemberResponse
 from app.types.business import MemberTier
 
 
+def _decrypt_stored_amount(value) -> Decimal:
+    """Decrypt a stored monetary value. Handles plain strings, Decimals, and encrypted strings."""
+    if isinstance(value, Decimal):
+        return value
+    str_val = str(value)
+    if field_encryptor.enabled:
+        try:
+            decrypted = field_encryptor.decrypt(str_val)
+            return Decimal(decrypted) if decrypted else Decimal(str_val)
+        except (ValueError, Exception):
+            pass
+    try:
+        return Decimal(str_val)
+    except Exception:
+        return Decimal("0.00")
+
+
 def get_points_balance(db: Session, member_id: int) -> int:
     points_sum = db.execute(
         select(func.coalesce(func.sum(PointsLedger.points_delta), 0)).where(PointsLedger.member_id == member_id)
@@ -20,17 +37,7 @@ def get_wallet_balance(db: Session, member_id: int) -> Decimal | None:
     wallet = db.execute(select(WalletAccount).where(WalletAccount.member_id == member_id)).scalar_one_or_none()
     if not wallet:
         return None
-    balance = wallet.balance
-    if isinstance(balance, Decimal):
-        return balance
-    # Handle encrypted string balance
-    if field_encryptor.enabled:
-        try:
-            decrypted = field_encryptor.decrypt(str(balance))
-            return Decimal(decrypted) if decrypted else Decimal(str(balance))
-        except (ValueError, Exception):
-            pass
-    return Decimal(str(balance))
+    return _decrypt_stored_amount(wallet.balance)
 
 
 def to_member_response(db: Session, member: Member) -> MemberResponse:

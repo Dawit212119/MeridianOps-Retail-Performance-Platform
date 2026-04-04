@@ -127,10 +127,13 @@ Migration sequence:
 
 ### 3.5 Audit and sensitive data handling
 
-- Loyalty, coupon, order, and inventory actions emit audit events with actor/resource metadata.
+- Loyalty, coupon, order, and inventory actions emit audit events with actor/resource metadata and `store_id` scope.
 - Sensitive keys in audit payload are masked by default.
-- Field encryption (`FieldEncryptor`) covers PII (member names) and stored-value monetary fields (wallet balances, ledger amounts).
-- Audit trail query endpoints available for loyalty/campaign/dashboard operations.
+- Audit log rows carry `store_id` for store-scoped queries; `store_manager` users only see events for their own store.
+- Field encryption (`FieldEncryptor`) covers PII (member names) and stored-value monetary fields.
+  - Wallet columns (`balance`, `amount`, `balance_after`) use `VARCHAR(255)` storage to hold either plaintext or Fernet ciphertext depending on `FIELD_ENCRYPTION_KEY` configuration.
+  - When encryption is enabled, all wallet reads decrypt transparently and all writes encrypt before persistence.
+- Audit trail query endpoints available for loyalty/campaign/order/dashboard operations with store-scoped access.
 
 ## 4) Frontend architecture
 

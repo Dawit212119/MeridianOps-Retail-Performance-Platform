@@ -124,6 +124,7 @@ def create_order(db: Session, payload: OrderCreateRequest, current_user: AuthUse
         resource_id=str(order.id),
         actor_user_id=current_user.id,
         detail={"order_reference": order.order_reference, "total_amount": str(total), "line_count": len(payload.lines)},
+        store_id=current_user.store_id,
     )
 
     return _build_order_response(db, order)
@@ -164,6 +165,7 @@ def reserve_order(db: Session, order_reference: str, current_user: AuthUser) -> 
         resource_id=str(order.id),
         actor_user_id=current_user.id,
         detail={"order_reference": order.order_reference, "line_count": len(lines)},
+        store_id=current_user.store_id,
     )
 
     return _build_order_response(db, order)
@@ -191,6 +193,7 @@ def complete_order(db: Session, order_reference: str, current_user: AuthUser) ->
         resource_id=str(order.id),
         actor_user_id=current_user.id,
         detail={"order_reference": order.order_reference},
+        store_id=current_user.store_id,
     )
 
     return _build_order_response(db, order)
@@ -218,6 +221,7 @@ def cancel_order(db: Session, order_reference: str, current_user: AuthUser) -> O
         resource_id=str(order.id),
         actor_user_id=current_user.id,
         detail={"order_reference": order.order_reference},
+        store_id=current_user.store_id,
     )
 
     return _build_order_response(db, order)

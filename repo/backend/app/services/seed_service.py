@@ -54,7 +54,7 @@ def _ensure_member(db: Session, member_code: str, full_name: str, tier: str, sto
     db.flush()
 
     if stored_value_enabled:
-        wallet = WalletAccount(member_id=member.id, balance=Decimal("150.00"), currency="USD", is_active=True)
+        wallet = WalletAccount(member_id=member.id, balance="150.00", currency="USD", is_active=True)
         db.add(wallet)
         db.flush()
         db.add(
@@ -62,8 +62,8 @@ def _ensure_member(db: Session, member_code: str, full_name: str, tier: str, sto
                 wallet_account_id=wallet.id,
                 member_id=member.id,
                 entry_type=WalletEntryType.CREDIT.value,
-                amount=Decimal("150.00"),
-                balance_after=Decimal("150.00"),
+                amount="150.00",
+                balance_after="150.00",
                 reason="seed top-up",
                 operator_user_id=None,
             )
@@ -74,7 +74,7 @@ def _ensure_member(db: Session, member_code: str, full_name: str, tier: str, sto
             member_id=member.id,
             points_delta=120,
             reason="seed baseline",
-            pre_tax_amount=Decimal("120.00"),
+            pre_tax_amount="120.00",
             operator_user_id=None,
         )
     )

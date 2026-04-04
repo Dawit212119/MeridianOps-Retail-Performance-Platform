@@ -97,6 +97,7 @@ def create_campaign(db: Session, payload: CampaignCreateRequest, actor_user: Aut
         resource_id=str(campaign.id),
         actor_user_id=actor_user.id,
         detail={"campaign_type": campaign.campaign_type, "name": campaign.name},
+        store_id=actor_user.store_id,
     )
     return campaign
 
@@ -150,6 +151,7 @@ def update_campaign(
         resource_id=str(campaign.id),
         actor_user_id=actor_user_id,
         detail={"campaign_type": campaign.campaign_type, "name": campaign.name},
+        store_id=campaign.store_id,
     )
     db.flush()
     return campaign
@@ -211,6 +213,7 @@ def issue_coupon(db: Session, request: CouponIssueRequest, actor_user: AuthUser)
         resource_id=str(coupon.id),
         actor_user_id=actor_user.id,
         detail={"coupon_code": coupon.coupon_code, "campaign_id": campaign.id},
+        store_id=coupon.store_id,
     )
 
     return coupon, qr_payload
@@ -511,6 +514,7 @@ def redeem_coupon(
             "discount_amount": discount_amount,
             "order_reference": request.order_reference,
         },
+        store_id=coupon.store_id,
     )
 
     logger.info(

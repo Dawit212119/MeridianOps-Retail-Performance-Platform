@@ -46,6 +46,7 @@ export const navigationItems: NavigationItem[] = [
     roles: ["administrator", "store_manager", "employee"],
   },
   { name: "Analytics", path: "/app/analytics", roles: ["administrator", "store_manager"] },
+  { name: "Audit Trail", path: "/app/audit", roles: ["administrator", "store_manager"] },
   {
     name: "Analytics Builder",
     path: "/app/analytics/builder",

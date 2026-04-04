@@ -91,7 +91,7 @@ def create_member(
     db.flush()
 
     if payload.stored_value_enabled:
-        db.add(WalletAccount(member_id=member.id, balance=Decimal("0.00"), currency="USD", is_active=True))
+        db.add(WalletAccount(member_id=member.id, balance=_encrypt_amount(Decimal("0.00")), currency="USD", is_active=True))
 
     audit_event(
         db,
@@ -100,6 +100,7 @@ def create_member(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "tier": member.tier},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member)
@@ -122,7 +123,7 @@ def update_member(
         member.stored_value_enabled = payload.stored_value_enabled
         wallet = db.execute(select(WalletAccount).where(WalletAccount.member_id == member.id)).scalar_one_or_none()
         if payload.stored_value_enabled and not wallet:
-            db.add(WalletAccount(member_id=member.id, balance=Decimal("0.00"), currency="USD", is_active=True))
+            db.add(WalletAccount(member_id=member.id, balance=_encrypt_amount(Decimal("0.00")), currency="USD", is_active=True))
 
     audit_event(
         db,
@@ -131,6 +132,7 @@ def update_member(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "tier": member.tier},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member)
@@ -150,7 +152,7 @@ def accrue_points(
         member_id=member.id,
         points_delta=points,
         reason=payload.reason,
-        pre_tax_amount=round_money(payload.pre_tax_amount),
+        pre_tax_amount=str(round_money(payload.pre_tax_amount)),
         operator_user_id=actor_user_id,
     )
     db.add(entry)
@@ -162,6 +164,7 @@ def accrue_points(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "points_delta": points, "reason": payload.reason},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member), entry
@@ -191,6 +194,7 @@ def adjust_points(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "points_delta": payload.points_delta, "reason": payload.reason},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member), entry
@@ -215,13 +219,15 @@ def _write_wallet_ledger(
     amount: Decimal,
     reason: str,
     actor_user_id: int | None,
+    new_balance: Decimal | None = None,
 ) -> WalletLedger:
+    balance_after = new_balance if new_balance is not None else _decrypt_amount(wallet.balance)
     entry = WalletLedger(
         wallet_account_id=wallet.id,
         member_id=member.id,
         entry_type=entry_type.value,
-        amount=round_money(amount),
-        balance_after=round_money(_decrypt_amount(wallet.balance)),
+        amount=_encrypt_amount(round_money(amount)),
+        balance_after=_encrypt_amount(round_money(balance_after)),
         reason=reason,
         operator_user_id=actor_user_id,
     )
@@ -241,12 +247,13 @@ def credit_wallet(
 
     current_balance = _decrypt_amount(wallet.balance)
     new_balance = round_money(current_balance + payload.amount)
-    wallet.balance = new_balance
+    wallet.balance = _encrypt_amount(new_balance)
     entry = _write_wallet_ledger(
         db,
         wallet=wallet,
         member=member,
         entry_type=WalletEntryType.CREDIT,
+        new_balance=new_balance,
         amount=payload.amount,
         reason=payload.reason,
         actor_user_id=actor_user_id,
@@ -259,6 +266,7 @@ def credit_wallet(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "amount": str(round_money(payload.amount)), "reason": payload.reason},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member), entry
@@ -279,12 +287,13 @@ def debit_wallet(
     if new_balance < Decimal("0.00"):
         raise WalletOperationError("Insufficient wallet balance")
 
-    wallet.balance = new_balance
+    wallet.balance = _encrypt_amount(new_balance)
     entry = _write_wallet_ledger(
         db,
         wallet=wallet,
         member=member,
         entry_type=WalletEntryType.DEBIT,
+        new_balance=new_balance,
         amount=payload.amount,
         reason=payload.reason,
         actor_user_id=actor_user_id,
@@ -297,6 +306,7 @@ def debit_wallet(
         resource_id=str(member.id),
         actor_user_id=actor_user_id,
         detail={"member_code": member.member_code, "amount": str(round_money(payload.amount)), "reason": payload.reason},
+        store_id=store_id,
     )
     db.flush()
     return to_member_response(db, member), entry

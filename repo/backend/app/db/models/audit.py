@@ -13,6 +13,7 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     resource_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     resource_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    store_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     actor_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     detail_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

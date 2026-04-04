@@ -80,6 +80,7 @@ def create_topic(db: Session, payload: TopicCreateRequest, current_user: AuthUse
         resource_id=str(topic.id),
         actor_user_id=current_user.id,
         detail={"code": topic.code, "name": topic.name, "difficulty": topic.difficulty},
+        store_id=current_user.store_id,
     )
 
     return TopicResponse(id=topic.id, code=topic.code, name=topic.name, difficulty=payload.difficulty)
@@ -107,6 +108,7 @@ def create_question(db: Session, payload: QuestionCreateRequest, current_user: A
         resource_id=str(question.id),
         actor_user_id=current_user.id,
         detail={"topic_code": topic.code},
+        store_id=topic.store_id,
     )
 
     return question.id
@@ -182,6 +184,7 @@ def assign_topic(db: Session, payload: AssignmentRequest, current_user: AuthUser
         resource_id=f"{employee.id}:{topic.id}",
         actor_user_id=current_user.id,
         detail={"employee_username": employee.username, "topic_code": topic.code},
+        store_id=topic.store_id,
     )
 
 

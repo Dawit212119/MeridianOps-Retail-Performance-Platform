@@ -101,6 +101,7 @@ def update_rules(db: Session, payload: AttendanceRuleUpdateRequest, current_user
             "cross_day_shift_cutoff_hour": rules.cross_day_shift_cutoff_hour,
             "late_early_penalty_hours": str(rules.late_early_penalty_hours),
         },
+        store_id=current_user.store_id,
     )
 
     return get_rules(db)
@@ -210,6 +211,7 @@ def check_in(db: Session, payload: CheckInRequest, current_user: AuthUser) -> At
             "qr_token": token.token if token else None,
             "nfc_tag": payload.nfc_tag,
         },
+        store_id=current_user.store_id,
     )
 
     logger.info(
@@ -330,6 +332,7 @@ def check_out(db: Session, payload: CheckOutRequest, current_user: AuthUser) -> 
             "nfc_tag": payload.nfc_tag,
             "worked_hours": str(daily.worked_hours),
         },
+        store_id=current_user.store_id,
     )
 
     logger.info(
@@ -463,6 +466,7 @@ def approve_makeup_request(db: Session, request_id: int, payload: MakeupRequestA
         resource_id=str(row.id),
         actor_user_id=current_user.id,
         detail={"user_id": row.user_id, "business_date": row.business_date.isoformat()},
+        store_id=current_user.store_id,
     )
 
     logger.info(

@@ -1,4 +1,4 @@
-﻿import json
+import json
 from decimal import Decimal
 
 from app.core.masking import mask_record
@@ -27,6 +27,7 @@ def audit_event(
     resource_id: str,
     actor_user_id: int | None,
     detail: dict,
+    store_id: int | None = None,
 ) -> AuditLog:
     sanitized = {}
     for key, value in detail.items():
@@ -40,6 +41,7 @@ def audit_event(
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
+        store_id=store_id,
         actor_user_id=actor_user_id,
         detail_json=json.dumps(masked, sort_keys=True),
     )

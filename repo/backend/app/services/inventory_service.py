@@ -115,6 +115,7 @@ def create_item(db: Session, payload: InventoryItemCreateRequest, current_user: 
         resource_id=str(row.id),
         actor_user_id=current_user.id,
         detail={"sku": row.sku, "name": row.name},
+        store_id=current_user.store_id,
     )
 
     return InventoryItemResponse(
@@ -144,6 +145,7 @@ def create_location(db: Session, payload: InventoryLocationCreateRequest, curren
         resource_id=str(row.id),
         actor_user_id=current_user.id,
         detail={"code": row.code, "name": row.name},
+        store_id=current_user.store_id,
     )
 
     return InventoryLocationResponse(id=row.id, code=row.code, name=row.name)
@@ -206,6 +208,7 @@ def post_receiving(db: Session, payload: ReceivingRequest, current_user: AuthUse
         resource_id=str(document.id),
         actor_user_id=current_user.id,
         detail={"location_code": location.code, "line_count": len(payload.lines)},
+        store_id=location.store_id,
     )
 
     return InventoryDocumentResponse(document_id=document.id, doc_type=document.doc_type, status=document.status)
@@ -296,6 +299,7 @@ def post_transfer(db: Session, payload: TransferRequest, current_user: AuthUser)
         resource_id=str(document.id),
         actor_user_id=current_user.id,
         detail={"source": source.code, "target": target.code, "line_count": len(payload.lines)},
+        store_id=source.store_id,
     )
 
     return InventoryDocumentResponse(document_id=document.id, doc_type=document.doc_type, status=document.status)
@@ -367,6 +371,7 @@ def post_count(db: Session, payload: CountRequest, current_user: AuthUser) -> In
         resource_id=str(document.id),
         actor_user_id=current_user.id,
         detail={"location": location.code, "line_count": len(payload.lines)},
+        store_id=location.store_id,
     )
 
     return InventoryDocumentResponse(document_id=document.id, doc_type=document.doc_type, status=document.status)
@@ -436,6 +441,7 @@ def create_reservation(db: Session, payload: ReservationCreateRequest, current_u
         resource_id=str(reservation.id),
         actor_user_id=actor_user_id,
         detail={"order_reference": reservation.order_reference, "sku": item.sku, "qty": str(qty)},
+        store_id=location.store_id,
     )
 
     logger.info(
@@ -502,6 +508,7 @@ def release_reservation(db: Session, payload: ReservationReleaseRequest, current
             resource_id=str(reservation.id),
             actor_user_id=current_user.id,
             detail={"order_reference": reservation.order_reference, "sku": item.sku, "released_qty": str(remaining)},
+            store_id=location.store_id,
         )
 
         logger.info(

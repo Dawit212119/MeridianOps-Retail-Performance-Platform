@@ -19,6 +19,7 @@ import InventoryReceivingView from "@/views/app/InventoryReceivingView.vue";
 import InventoryTransfersView from "@/views/app/InventoryTransfersView.vue";
 import MembersView from "@/views/app/MembersView.vue";
 import SharedDashboardView from "@/views/shared/SharedDashboardView.vue";
+import AuditTrailView from "@/views/app/AuditTrailView.vue";
 import TrainingReviewView from "@/views/app/TrainingReviewView.vue";
 import TrainingView from "@/views/app/TrainingView.vue";
 import HealthView from "@/views/system/HealthView.vue";
@@ -120,6 +121,11 @@ const router = createRouter({
         {
           path: "analytics/builder",
           component: AnalyticsBuilderView,
+          meta: { roles: ["administrator", "store_manager"] },
+        },
+        {
+          path: "audit",
+          component: AuditTrailView,
           meta: { roles: ["administrator", "store_manager"] },
         },
         {

@@ -1,10 +1,6 @@
 <template>
   <section class="login-card">
     <h1>Login</h1>
-    <p>
-      Use one of the local bootstrap users (for example: `admin`, `manager`, `clerk`, `cashier`,
-      `employee`).
-    </p>
     <form @submit.prevent="onSubmit">
       <label for="username">Username</label>
       <input id="username" v-model.trim="username" required maxlength="64" />
@@ -21,7 +17,6 @@
 
       <button class="btn" type="submit" :disabled="auth.loading">Sign In</button>
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-      <p class="hint">Default password for seed users: `ChangeMeNow123`.</p>
     </form>
   </section>
 </template>
@@ -36,8 +31,8 @@ import { getErrorMessage } from "@/utils/feedback";
 const auth = useAuthStore();
 const router = useRouter();
 
-const username = ref("admin");
-const password = ref("ChangeMeNow123");
+const username = ref("");
+const password = ref("");
 const errorMessage = ref("");
 
 async function onSubmit() {
