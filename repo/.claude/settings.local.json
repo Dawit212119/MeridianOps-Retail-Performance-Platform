@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python -m pytest tests/test_security_coverage.py -v -k \"kpi_runs\" --tb=short)",
       "Bash(python -m pytest tests/ --ignore=tests/test_postgres_locking.py --tb=short)",
-      "Bash(python -c \"from app.services.kpi_service import list_kpi_runs, _store_id_json_contains; print\\('Import OK, or_ accessible'\\)\")"
+      "Bash(python -c \"from app.services.kpi_service import list_kpi_runs, _store_id_json_contains; print\\('Import OK, or_ accessible'\\)\")",
+      "Read(//c/MeridianOps-Retail-Performance-Platform/sessions/**)",
+      "Read(//c/MeridianOps-Retail-Performance-Platform/**)",
+      "Bash(python3 -c ':*)",
+      "Bash(python -c ':*)",
+      "Bash(python -m pytest tests/test_security_coverage.py tests/test_training_flow.py tests/test_ops_kpi.py -v --tb=short)"
     ]
   }
 }
