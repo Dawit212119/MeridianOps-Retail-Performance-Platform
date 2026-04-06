@@ -2,7 +2,7 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.masking import mask_record
@@ -208,6 +208,7 @@ def run_kpi_materialization(
         processed_from_date=start_date,
         processed_to_date=end_date,
         records_written=0,
+        store_ids_json=json.dumps(scoped_store_ids, separators=(",", ":")),
         error_message=None,
         created_by_user_id=actor_user_id,
     )
@@ -253,9 +254,30 @@ def run_kpi_materialization(
     return run
 
 
-def list_kpi_runs(db: Session, limit: int = 50) -> list[KPIJobRun]:
-    rows = db.execute(select(KPIJobRun).order_by(KPIJobRun.id.desc()).limit(limit)).scalars()
-    return list(rows)
+def _store_id_json_contains(store_id: int):
+    """Build an OR filter matching store_id inside a JSON integer array stored as text.
+
+    The column stores values like ``[101]``, ``[0,101]``, ``[101,102]``.
+    We match four boundary patterns so that store 10 never false-matches 100.
+    """
+    sid = str(store_id)
+    return or_(
+        KPIJobRun.store_ids_json.like(f"%[{sid}]%"),
+        KPIJobRun.store_ids_json.like(f"%[{sid},%"),
+        KPIJobRun.store_ids_json.like(f"%,{sid},%"),
+        KPIJobRun.store_ids_json.like(f"%,{sid}]%"),
+    )
+
+
+def list_kpi_runs(db: Session, limit: int = 50, scope_store_id: int | None = None) -> list[KPIJobRun]:
+    stmt = select(KPIJobRun).order_by(KPIJobRun.id.desc())
+    if scope_store_id is not None:
+        stmt = stmt.where(
+            KPIJobRun.store_ids_json.is_not(None),
+            _store_id_json_contains(scope_store_id),
+        )
+    stmt = stmt.limit(limit)
+    return list(db.execute(stmt).scalars().all())
 
 
 def list_kpi_metrics(db: Session, start_date: date, end_date: date, store_id: int | None = None) -> list[KPIDailyMetric]:

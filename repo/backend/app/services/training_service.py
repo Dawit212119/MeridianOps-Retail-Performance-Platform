@@ -54,14 +54,19 @@ def list_topics(db: Session, store_id: int | None = None) -> list[TopicResponse]
     return [TopicResponse(id=row.id, code=row.code, name=row.name, difficulty=row.difficulty) for row in topics]
 
 
+class TopicDuplicateError(TrainingError):
+    pass
+
+
 def create_topic(db: Session, payload: TopicCreateRequest, current_user: AuthUser) -> TopicResponse:
     code = _normalize_topic_code(payload.code)
-    exists_stmt = select(QuizTopic.id).where(QuizTopic.code == code)
-    if current_user.store_id is not None:
-        exists_stmt = exists_stmt.where(QuizTopic.store_id == current_user.store_id)
+    exists_stmt = select(QuizTopic.id).where(
+        QuizTopic.code == code,
+        QuizTopic.store_id == current_user.store_id,
+    )
     exists = db.execute(exists_stmt).scalar_one_or_none()
     if exists:
-        raise TrainingError("Topic code already exists")
+        raise TopicDuplicateError("Topic code already exists for this store")
 
     topic = QuizTopic(
         store_id=current_user.store_id,

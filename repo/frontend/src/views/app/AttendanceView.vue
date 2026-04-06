@@ -11,16 +11,18 @@
         {{ rules.cross_day_shift_cutoff_hour }}:00 | Penalty {{ rules.late_early_penalty_hours }}h
       </p>
       <button class="btn" @click="refreshRules">Refresh Rules</button>
-      <button class="btn" @click="onRotateQr">Rotate QR Token</button>
-      <button class="btn" @click="toggleAutoRotation">
-        {{ autoRotationActive ? "Stop Auto-Rotation" : "Start Auto-Rotation (30s)" }}
-      </button>
-      <p v-if="currentQrToken">
-        Current QR token: {{ currentQrToken }}
-        <span v-if="qrSecondsRemaining > 0"> (expires in {{ qrSecondsRemaining }}s)</span>
-        <span v-else-if="currentQrToken && qrSecondsRemaining <= 0" class="error"> (expired)</span>
-      </p>
-      <p v-if="autoRotationActive">Auto-rotation active — token refreshes every 30 seconds</p>
+      <template v-if="isManager">
+        <button class="btn" @click="onRotateQr">Rotate QR Token</button>
+        <button class="btn" @click="toggleAutoRotation">
+          {{ autoRotationActive ? "Stop Auto-Rotation" : "Start Auto-Rotation (30s)" }}
+        </button>
+        <p v-if="currentQrToken">
+          Current QR token: {{ currentQrToken }}
+          <span v-if="qrSecondsRemaining > 0"> (expires in {{ qrSecondsRemaining }}s)</span>
+          <span v-else-if="currentQrToken && qrSecondsRemaining <= 0" class="error"> (expired)</span>
+        </p>
+        <p v-if="autoRotationActive">Auto-rotation active — token refreshes every 30 seconds</p>
+      </template>
     </section>
 
     <section class="panel">
@@ -81,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 import {
   attendanceCheckIn,
@@ -92,10 +94,17 @@ import {
   type AttendanceRule,
   type AttendanceShiftRow,
 } from "@/services/attendance";
+import { useAuthStore } from "@/stores/auth";
 import { useUiStore } from "@/stores/ui";
 import { notifyError } from "@/utils/feedback";
 
+const auth = useAuthStore();
 const ui = useUiStore();
+
+const isManager = computed(() => {
+  const roles = auth.roles;
+  return roles.includes("administrator") || roles.includes("store_manager");
+});
 
 const rules = ref<AttendanceRule | null>(null);
 const shifts = ref<AttendanceShiftRow[]>([]);

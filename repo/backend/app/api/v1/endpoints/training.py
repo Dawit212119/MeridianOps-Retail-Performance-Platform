@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import get_current_user, require_roles
-from app.core.errors import bad_request
+from app.core.errors import bad_request, conflict
 from app.db.session import get_db
 from app.schemas.auth import AuthUser
 from app.schemas.training import (
@@ -17,6 +17,7 @@ from app.schemas.training import (
     TrainingTrendPoint,
 )
 from app.services.training_service import (
+    TopicDuplicateError,
     TrainingError,
     assign_topic,
     create_question,
@@ -52,6 +53,9 @@ def training_create_topic(
         response = create_topic(db, payload, current_user)
         db.commit()
         return response
+    except TopicDuplicateError as exc:
+        db.rollback()
+        raise conflict(str(exc))
     except TrainingError as exc:
         db.rollback()
         raise bad_request(str(exc))

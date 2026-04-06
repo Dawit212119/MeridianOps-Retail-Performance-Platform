@@ -22,6 +22,7 @@ class KPIJobRun(Base):
     processed_from_date: Mapped[date] = mapped_column(Date, nullable=False)
     processed_to_date: Mapped[date] = mapped_column(Date, nullable=False)
     records_written: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    store_ids_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

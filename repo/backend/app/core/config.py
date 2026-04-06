@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     auth_enable_seed_bootstrap: bool = False
     auth_bootstrap_password: str | None = None
     field_encryption_key: str | None = None
+    frontend_base_url: str | None = None
+    seed_demo_enabled: bool = False
     scheduler_enabled: bool = True
     scheduler_kpi_hour_utc: int = 2
     scheduler_start_on_boot: bool = False
@@ -25,9 +27,13 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.backend_cors_origins.split(",") if origin.strip()]
 
     @property
+    def is_dev_env(self) -> bool:
+        return self.app_env.strip().lower() in {"local", "dev", "development", "test"}
+
+    @property
     def auth_cookie_secure(self) -> bool:
         # Keep local/dev/test ergonomics while requiring secure cookies elsewhere.
-        return self.app_env.strip().lower() not in {"local", "dev", "development", "test"}
+        return not self.is_dev_env
 
 
 settings = Settings()

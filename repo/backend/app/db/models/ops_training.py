@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -109,10 +109,13 @@ class InventoryReservation(Base):
 
 class QuizTopic(Base):
     __tablename__ = "quiz_topics"
+    __table_args__ = (
+        UniqueConstraint("store_id", "code", name="uq_quiz_topics_store_code"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     store_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    code: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
+    code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     difficulty: Mapped[str] = mapped_column(String(20), nullable=False, default="medium")
     created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

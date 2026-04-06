@@ -1,10 +1,11 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import Response as RawResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import get_current_user, require_roles
+from app.core.config import settings
 from app.core.errors import bad_request, forbidden
 from app.db.session import get_db
 from app.schemas.analytics import (
@@ -46,7 +47,22 @@ from app.services.analytics_service import (
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 _MANAGER_ROLES = {"administrator", "store_manager"}
-_FRONTEND_BASE_URL = "http://localhost:5173"
+
+
+class FrontendBaseURLMissingError(ValueError):
+    pass
+
+
+def _resolve_frontend_base_url(request: Request) -> str:
+    if settings.frontend_base_url:
+        return settings.frontend_base_url.rstrip("/")
+    if not settings.is_dev_env:
+        raise FrontendBaseURLMissingError(
+            "FRONTEND_BASE_URL must be configured in non-development environments"
+        )
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", "localhost"))
+    return f"{proto}://{host}"
 
 
 def _parse_store_ids(store_ids: str | None) -> list[int] | None:
@@ -65,6 +81,8 @@ def _parse_store_ids(store_ids: str | None) -> list[int] | None:
 
 
 def _handle_dashboard_error(exc: Exception):
+    if isinstance(exc, FrontendBaseURLMissingError):
+        raise bad_request(str(exc))
     if isinstance(exc, DashboardPermissionError):
         raise forbidden(str(exc))
     if isinstance(exc, DashboardNotFoundError):
@@ -340,12 +358,14 @@ def dashboard_audit(
 def dashboard_share_link_create(
     dashboard_id: int,
     payload: ShareLinkCreateRequest,
+    request: Request,
     _: AuthUser = Depends(require_roles(_MANAGER_ROLES)),
     current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ShareLinkResponse:
     try:
-        response = create_share_link(db, dashboard_id, payload, current_user, _FRONTEND_BASE_URL)
+        frontend_base_url = _resolve_frontend_base_url(request)
+        response = create_share_link(db, dashboard_id, payload, current_user, frontend_base_url)
         db.commit()
         return response
     except Exception as exc:  # noqa: BLE001
@@ -356,12 +376,14 @@ def dashboard_share_link_create(
 @router.get("/dashboards/{dashboard_id}/share-links", response_model=list[ShareLinkResponse])
 def dashboard_share_link_list(
     dashboard_id: int,
+    request: Request,
     _: AuthUser = Depends(require_roles(_MANAGER_ROLES)),
     current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[ShareLinkResponse]:
     try:
-        return list_share_links(db, dashboard_id, current_user, _FRONTEND_BASE_URL)
+        frontend_base_url = _resolve_frontend_base_url(request)
+        return list_share_links(db, dashboard_id, current_user, frontend_base_url)
     except Exception as exc:  # noqa: BLE001
         _handle_dashboard_error(exc)
 

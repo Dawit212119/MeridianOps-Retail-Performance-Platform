@@ -39,6 +39,35 @@ What this does:
 - Runs frontend tests only if backend tests pass.
 - Returns non-zero exit code on failure.
 
+## Configuration
+
+### Security & Feature Settings
+
+| Variable | Default | Description |
+|---|---|---|
+| `FRONTEND_BASE_URL` | *(unset)* | Explicit base URL for share-link generation (e.g. `https://app.example.com`). **Required in production/staging** — the backend returns HTTP 400 if this is unset in non-dev environments. In `local`/`dev`/`test` envs only, the backend falls back to deriving the URL from the request's `Host` and `X-Forwarded-Proto` headers. |
+| `SEED_DEMO_ENABLED` | `false` | Must be `true` to allow the `POST /api/v1/ops/seed/demo` endpoint. Even when enabled, the endpoint is blocked in `production`/`prod` environments. |
+| `APP_ENV` | `local` | Environment identifier. Affects cookie secure flag and seed/demo availability. Use `production` or `prod` for live deployments. |
+| `FIELD_ENCRYPTION_KEY` | *(unset)* | When set, wallet monetary columns are encrypted at rest. |
+
+### Migration Notes (v0015–v0016)
+
+- **0015**: `quiz_topics.code` uniqueness changed from global to `(store_id, code)`. Two stores can now have the same topic code independently.
+- **0016**: `kpi_job_runs.store_ids_json` added. KPI run history is now scoped: store managers only see runs that include their store.
+
+Run migrations after upgrading:
+
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+Before production rollout, perform a dry-run of both upgrade and downgrade in staging to verify migration safety:
+
+```bash
+docker compose exec backend alembic upgrade head --sql   # review generated SQL
+docker compose exec backend alembic downgrade -1 --sql   # verify rollback path
+```
+
 ## Docker-Only Policy
 
 This project must be started, tested, and validated using Docker Compose only.

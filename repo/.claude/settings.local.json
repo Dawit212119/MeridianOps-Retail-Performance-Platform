@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_security_coverage.py -v -k \"kpi_runs\" --tb=short)",
+      "Bash(python -m pytest tests/ --ignore=tests/test_postgres_locking.py --tb=short)",
+      "Bash(python -c \"from app.services.kpi_service import list_kpi_runs, _store_id_json_contains; print\\('Import OK, or_ accessible'\\)\")"
+    ]
+  }
+}

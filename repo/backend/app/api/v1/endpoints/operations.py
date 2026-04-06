@@ -115,10 +115,16 @@ def kpi_backfill(
 @router.get("/kpi/runs", response_model=list[KPIJobRunResponse])
 def kpi_runs(
     limit: int = Query(default=50, ge=1, le=200),
+    current_user: AuthUser = Depends(get_current_user),
     _: AuthUser = Depends(require_roles(_ADMIN_MANAGER_ROLES)),
     db: Session = Depends(get_db),
 ) -> list[KPIJobRunResponse]:
-    runs = list_kpi_runs(db, limit=limit)
+    scope_store_id: int | None = None
+    if "administrator" not in current_user.roles:
+        if current_user.store_id is None:
+            raise forbidden("Store manager has no assigned store scope")
+        scope_store_id = current_user.store_id
+    runs = list_kpi_runs(db, limit=limit, scope_store_id=scope_store_id)
     return [
         KPIJobRunResponse(
             id=run.id,
@@ -183,6 +189,16 @@ def seed_demo(
     _: AuthUser = Depends(require_roles({"administrator"})),
     db: Session = Depends(get_db),
 ) -> SeedDataResponse:
+    from app.core.config import settings
+
+    if not settings.seed_demo_enabled:
+        raise forbidden(
+            "Seed/demo endpoint is disabled. Set SEED_DEMO_ENABLED=true to allow."
+        )
+    if settings.app_env.strip().lower() in {"production", "prod"}:
+        raise forbidden(
+            "Seed/demo endpoint is not available in production environments."
+        )
     try:
         result = seed_demo_data(db, current_user)
         db.commit()

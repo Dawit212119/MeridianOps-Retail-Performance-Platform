@@ -9,6 +9,7 @@ from pypdf import PdfReader
 from sqlalchemy import select
 
 from app.cli import backfill_kpi
+from app.core.config import settings
 from app.db.models import AuditLog, InventoryItem, InventoryLedger, InventoryLocation, KPIDailyMetric, KPIJobRun
 from app.services.auth_service import create_user
 from app.services import kpi_service
@@ -58,7 +59,9 @@ def test_scheduler_next_run_utc_boundary() -> None:
     assert scheduler._next_run_utc(late) == datetime(2026, 3, 27, 2, 0, tzinfo=timezone.utc)
 
 
-def test_operations_permissions_and_scheduler_controls(client) -> None:
+def test_operations_permissions_and_scheduler_controls(client, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "seed_demo_enabled", True)
+    monkeypatch.setattr(settings, "app_env", "local")
     today = date.today().isoformat()
     payload = {"start_date": today, "end_date": today, "store_ids": [101]}
 
@@ -148,7 +151,9 @@ def test_store_manager_cannot_access_other_store_dashboard_audit(client, db_sess
     assert forbidden_audit.status_code == 403
 
 
-def test_kpi_backfill_materializes_metrics_and_logs_runs(client, db_session) -> None:
+def test_kpi_backfill_materializes_metrics_and_logs_runs(client, db_session, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "seed_demo_enabled", True)
+    monkeypatch.setattr(settings, "app_env", "local")
     _login(client, "admin")
     seeded = client.post("/api/v1/ops/seed/demo")
     assert seeded.status_code == 200
